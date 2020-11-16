@@ -63,7 +63,7 @@ def requestWeb(connectionSocket = None, addr = None, thread = None):
                     break
    #em caso de timeout trata a exceção
     except timeout as e:
-        print("Connection ",e)
+        print("connection ",e)
     finally:
         print("Closing Connection")
         send_request_socket.close()

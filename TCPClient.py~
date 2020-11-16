@@ -16,5 +16,5 @@ for i in range(10):
     print("From Server: ",modifiedSentence.decode())
     #clientSocket.close()
     time.sleep(1)
-#time.sleep(30)
+time.sleep(30)
 clientSocket.close()

@@ -28,7 +28,7 @@ def findHost(request:str) -> str:
     length = len('Host: ')
     start = request.find('Host: ')
     if(start == -1):
-        return '-1'
+        return None
     end = request.find('\r\n',start+length,len(request)-1)
     host = request[start+length:end]
     return host
@@ -41,21 +41,45 @@ def findHTTP(request:str) -> str:
 
 def requestWeb(connectionSocket = None, addr = None, thread = None):
     print("Starting Thread: ",thread)
-    rq = connectionSocket.recv(1024)
-    #print(rq)
-    while rq != b'':
-        #print(rq)
-        request = rq.decode()
+    
+    connection = True
+    #Recebe requisição do cliente
+    try:
+        request = connectionSocket.recv(1024).decode()
         print("From Client: ",request)
-        host = findHost(request)
+        #encontra a versão HTTP
         version = findHTTP(request)
+        #Encontra o host no request do cliente
+        host = findHost(request)
+        print(host)
+        #Inicia conexão com o servidor web
         send_request_socket = socket(AF_INET, SOCK_STREAM)
-        send_request_socket.connect((host,80))     
+        send_request_socket.connect((host,80)) 
+        #Envia a primeira requisição ao servidor Web
         send_request_socket.send(request.encode())
+        #Retorna a primeira página requisitada pelo cliente
         web_page = send_request_socket.recv(1024)
-        print("From Web Server: ", web_page.decode())
         connectionSocket.send(web_page)
-        rq = connectionSocket.recv(1024)
+        #Caso o cliente continue a conexão
+        if version!= 1.0:
+            while connection:
+                #print(rq)
+                try:
+                    rq = connectionSocket.recv(1024)
+                    if rq == '':
+                        break
+                    request = rq.decode()
+                    print("From Client: ",request)
+                    #Exceção em caso de fechar o servidor web
+                    send_request_socket.send(request.encode())
+                    web_page = send_request_socket.recv(1024)
+                    connectionSocket.send(web_page)
+                except timeout as e:
+                    print(e)
+                    break
+    except timeout as e:
+        print(e)
+    send_request_socket.close()
     connectionSocket.close()
     print("Closing Thread: ",thread)
     
@@ -70,6 +94,7 @@ th_num = 0
 
 while True:
   connectionSocket, addr = serverSocket.accept() 
+  connectionSocket.settimeout(10)
   print("creating thread: ", th_num)
   thread = threading.Thread(target = requestWeb, kwargs = dict(connectionSocket = connectionSocket, addr = addr, thread = th_num))
   th_num += 1
