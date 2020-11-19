@@ -50,6 +50,7 @@ def requestWeb(connectionSocket = None, addr = None, thread = None):
                 #print(rq)
                 try:
                     rq = connectionSocket.recv(1024)
+                    #Caso a conexão com o cliente esteja encerrada, termina o loop
                     if rq == b'':
                         break
                     request = rq.decode()
@@ -57,6 +58,9 @@ def requestWeb(connectionSocket = None, addr = None, thread = None):
                     #É necessário uma Exceção em caso de fechar o servidor web
                     send_request_socket.send(request.encode())
                     web_page = send_request_socket.recv(1024)
+                    #Caso a conexão com o servidor web seja encerrada, termina o loop
+                    if web_page == b'':
+                        break
                     connectionSocket.send(web_page)
                 except timeout as e:
                     print(e)
@@ -84,7 +88,7 @@ while True:
   #print("back to main")
   #Aceita conexão do client
   connectionSocket, addr = serverSocket.accept() 
-  #inicia um timeout de 10 segundos, ou seja se o cliente não enviar nada em 10 minutos a conexão encerra
+  #inicia um timeout de 10 segundos, ou seja se o cliente não enviar nada em 10 segundos a conexão encerra
   connectionSocket.settimeout(10)
   #Cria uma thread e envia o socket da conexão com o cliente como argumento, para receber as requisições
   thread = threading.Thread(target = requestWeb, kwargs = dict(connectionSocket = connectionSocket, addr = addr, thread = th_num))
